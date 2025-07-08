@@ -1,7 +1,8 @@
+export {getFinalKeyframe} from './animations/getFinalKeyframe.ts';
+
 export {
   getBoundingRectangle,
   getViewportBoundingRectangle,
-  PositionObserver,
 } from './bounding-rectangle/index.ts';
 export {getVisibleBoundingRectangle} from './bounding-rectangle/getVisibleBoundingRectangle.ts';
 
@@ -16,7 +17,10 @@ export {
 
 export {Listeners} from './event-listeners/index.ts';
 
-export {showPopover, supportsPopover} from './popover/index.ts';
+export {PositionObserver} from './observers/index.ts';
+export {ResizeNotifier} from './observers/ResizeNotifier.ts';
+
+export {showPopover, hidePopover, supportsPopover} from './popover/index.ts';
 
 export {
   canScroll,
@@ -43,6 +47,7 @@ export {
   isKeyboardEvent,
   isPointerEvent,
 } from './type-guards/index.ts';
+export {isTextInput} from './type-guards/isTextInput.ts';
 
 export {
   animateTransform,

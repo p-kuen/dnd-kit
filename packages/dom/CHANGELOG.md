@@ -1,5 +1,256 @@
 # @dnd-kit/dom
 
+## 0.1.19
+
+### Patch Changes
+
+- [#1735](https://github.com/clauderic/dnd-kit/pull/1735) [`cc7feac`](https://github.com/clauderic/dnd-kit/commit/cc7feacb003b95a744c81e7c75c2aa26d071971f) Thanks [@MateusJabour](https://github.com/MateusJabour)! - Fixes cleanup issue where user would be stuck in dragging mode
+
+- Updated dependencies [[`d848327`](https://github.com/clauderic/dnd-kit/commit/d848327b242c6714b36207071ad30e6b4183e865)]:
+  - @dnd-kit/state@0.1.19
+  - @dnd-kit/abstract@0.1.19
+  - @dnd-kit/collision@0.1.19
+  - @dnd-kit/geometry@0.1.19
+
+## 0.1.18
+
+### Patch Changes
+
+- [#1715](https://github.com/clauderic/dnd-kit/pull/1715) [`e502979`](https://github.com/clauderic/dnd-kit/commit/e502979375b9211fef277b8d657d9411f84be96c) Thanks [@github-actions](https://github.com/apps/github-actions)! - Improved TypeScript generics for better type safety and flexibility
+
+  - Enhanced `DragDropManager` to accept generic type parameters with proper constraints, allowing for more flexible type usage while maintaining type safety
+  - Updated `DragDropProvider` to support custom generic types for draggable and droppable entities
+  - Modified React hooks (`useDragDropManager`, `useDragDropMonitor`, `useDragOperation`) to properly infer and return the correct generic types
+  - Changed from concrete `Draggable` and `Droppable` types to generic parameters constrained by `Data` type
+
+- [`88942be`](https://github.com/clauderic/dnd-kit/commit/88942be007a743673644ba531fd5c6b1a501bf2e) Thanks [@clauderic](https://github.com/clauderic)! - **DOMRectangle**: Fix bugs with projected transforms.
+
+- [#1715](https://github.com/clauderic/dnd-kit/pull/1715) [`9326d43`](https://github.com/clauderic/dnd-kit/commit/9326d43ba0b9b682ee377011b96d4713711571a5) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Feedback**: Re-inject the feedback styles if they get removed from the DOM before the `Feedback` plugin is torn down.
+
+- [#1715](https://github.com/clauderic/dnd-kit/pull/1715) [`7af261f`](https://github.com/clauderic/dnd-kit/commit/7af261f4e3214a9ebef46d26df607221306eb697) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Feedback**: Fix an issue that caused styles to be removed when another instance of the Feedback plugin was torn down even if other instances of the Feedback plugin are still active.
+
+- [#1714](https://github.com/clauderic/dnd-kit/pull/1714) [`b9b182e`](https://github.com/clauderic/dnd-kit/commit/b9b182ef39f7aa8bfe2d331cb20c696b1e9fc15a) Thanks [@clauderic](https://github.com/clauderic)! - **OptimisticSortingPlugin**: Fixed a bug where using `queueMicrotask` in the `dragover` event of to check if `event.defaultPrevented()` was called by consumers was causing the order that we capture to be stale in the event that the consumer updates the order of sortable items before the micortask runs, which can happen in React for consumers using `useOptimistic` to update state optimistically.
+
+- [#1715](https://github.com/clauderic/dnd-kit/pull/1715) [`bb790c9`](https://github.com/clauderic/dnd-kit/commit/bb790c928a9955bd5c7c4312875090e16d891c23) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Feedback**: Fix a regression with the drop animation on Safari.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.18
+  - @dnd-kit/collision@0.1.18
+  - @dnd-kit/geometry@0.1.18
+  - @dnd-kit/state@0.1.18
+
+## 0.1.17
+
+### Patch Changes
+
+- [`cfb94d4`](https://github.com/clauderic/dnd-kit/commit/cfb94d4fef372059cb87cf0e63bc3ab87f5c8bd8) Thanks [@clauderic](https://github.com/clauderic)! - Added a `try` / `catch` in `showPopover` and `hidePopover` as the `element.matches(':popover-open')` selector can throw in browsers that don't support the Popover API.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.17
+  - @dnd-kit/collision@0.1.17
+  - @dnd-kit/geometry@0.1.17
+  - @dnd-kit/state@0.1.17
+
+## 0.1.16
+
+### Patch Changes
+
+- [#1712](https://github.com/clauderic/dnd-kit/pull/1712) [`93911cc`](https://github.com/clauderic/dnd-kit/commit/93911cca237bea302a12749476d4e18b74ac0fa2) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Debug**: Force the source debug elements to be re-promoted to the top of the top layer.
+
+- [#1712](https://github.com/clauderic/dnd-kit/pull/1712) [`0f68bb6`](https://github.com/clauderic/dnd-kit/commit/0f68bb6c95b1287d5988b1d5d4e94f1462fc36a5) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Feedback**: Account for frame scale when optimistically updating feedback element shape while dragging.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.16
+  - @dnd-kit/collision@0.1.16
+  - @dnd-kit/geometry@0.1.16
+  - @dnd-kit/state@0.1.16
+
+## 0.1.15
+
+### Patch Changes
+
+- [`5539a5a`](https://github.com/clauderic/dnd-kit/commit/5539a5a2991ac86b217dba3ef70fc06331bd0260) Thanks [@clauderic](https://github.com/clauderic)! - Mock `ResizeObserver` in SSR environment.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.15
+  - @dnd-kit/collision@0.1.15
+  - @dnd-kit/geometry@0.1.15
+  - @dnd-kit/state@0.1.15
+
+## 0.1.14
+
+### Patch Changes
+
+- [#1708](https://github.com/clauderic/dnd-kit/pull/1708) [`4c1e05d`](https://github.com/clauderic/dnd-kit/commit/4c1e05d531a1ffbf32b27d997ebd504532b9616a) Thanks [@GuillaumeSalles](https://github.com/GuillaumeSalles)! - Ensure PositionObserver recompute element rect if IntersectionObserver is scheduled in a different frame
+
+- [#1707](https://github.com/clauderic/dnd-kit/pull/1707) [`a97b10c`](https://github.com/clauderic/dnd-kit/commit/a97b10c9d8467c14ef678d3776ea10a2a1e6e027) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Feedback**:
+
+  - Fixed a bug where the initial `translate` string was incorrectly formed, causing it not to be applied.
+  - Fixed a bug with the placeholder ResizeObserver shape update
+  - Fixed a bug with the initial shape of the Feedback element when the source element unmounts and re-mounts during a drag operation
+  - Fixed a bug with the initial `transition` when setting up the Feedback element
+
+- [#1707](https://github.com/clauderic/dnd-kit/pull/1707) [`caa3273`](https://github.com/clauderic/dnd-kit/commit/caa3273af1fcee9b4e3b5f1e80e5573c84ab69e3) Thanks [@github-actions](https://github.com/apps/github-actions)! - **PositionObserver**: Fixed a bug with observing elements contained within same origin iframes. Due to limitations with `IntersectionObserver`, we need to also attach position observers on the containing iframe to ensure the position of elements nested withing the iframe is updated if the iframe position changes.
+
+- [#1707](https://github.com/clauderic/dnd-kit/pull/1707) [`cb47da3`](https://github.com/clauderic/dnd-kit/commit/cb47da3dad7ec617fabb6e8c3b3432a19b354812) Thanks [@github-actions](https://github.com/apps/github-actions)! - **DOMRectangle**: Fixed a bug with projected transforms where scale was not properly being taken into account.
+
+- [#1707](https://github.com/clauderic/dnd-kit/pull/1707) [`f295344`](https://github.com/clauderic/dnd-kit/commit/f2953444cbdb195e169fc615454d6be3170bf2a6) Thanks [@github-actions](https://github.com/apps/github-actions)! - **KeyboardSensor**: Delegated the responsibility of ending the drag operation when the window resizes to the Feedback plugin, as we only need to end the operation if the feedback element's window resizes, which can be different from the source element window.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.14
+  - @dnd-kit/collision@0.1.14
+  - @dnd-kit/geometry@0.1.14
+  - @dnd-kit/state@0.1.14
+
+## 0.1.13
+
+### Patch Changes
+
+- [`c46415a`](https://github.com/clauderic/dnd-kit/commit/c46415a0733f5cbba49cdbd7b6786a0d9add6800) Thanks [@clauderic](https://github.com/clauderic)! - **Feedback**: Removed `box-sizing: border-box` from the default Feedback plugin styles, and account for `box-sizing: content-box` or `box-sizing: border-box` when setting an explicit wdith and height on the feedback element.
+
+- [#1691](https://github.com/clauderic/dnd-kit/pull/1691) [`382f4e2`](https://github.com/clauderic/dnd-kit/commit/382f4e2f0800a3b85487a1a7a2cefef4484bee70) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Accessiblity**: Fixed a bug where accesibility instructions and announcement nodes were re-created on every drag operation.
+
+- [#1691](https://github.com/clauderic/dnd-kit/pull/1691) [`432a0dd`](https://github.com/clauderic/dnd-kit/commit/432a0dd8c67cfdebf0194205979b7249620e73a8) Thanks [@github-actions](https://github.com/apps/github-actions)! - **Feedback**: Fix a bug where options were not properly being set on the plugin instance.
+
+- [#1689](https://github.com/clauderic/dnd-kit/pull/1689) [`a3496c1`](https://github.com/clauderic/dnd-kit/commit/a3496c15c2dc07cc982608b2a4afb1c61b01dbb8) Thanks [@GuillaumeSalles](https://github.com/GuillaumeSalles)! - Ensure showPopover is not called when popover is already visible
+
+- [#1691](https://github.com/clauderic/dnd-kit/pull/1691) [`4a22b39`](https://github.com/clauderic/dnd-kit/commit/4a22b39267f1fa8d17a62b9c29ff8728733c1478) Thanks [@github-actions](https://github.com/apps/github-actions)! - **PointerSensor**: Update default activation constraints to only allow dragging via the `delay` constraint when the activation event target is a text input to avoid interfering with potential text selections within the text input.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.13
+  - @dnd-kit/collision@0.1.13
+  - @dnd-kit/geometry@0.1.13
+  - @dnd-kit/state@0.1.13
+
+## 0.1.12
+
+### Patch Changes
+
+- [`2e0e2e2`](https://github.com/clauderic/dnd-kit/commit/2e0e2e256d2043831df6a245df9f618ac4b5ecc9) Thanks [@clauderic](https://github.com/clauderic)! - Exported `Cursor` and `PreventSelection` plugins which are used in the default preset.
+
+- [#1687](https://github.com/clauderic/dnd-kit/pull/1687) [`b86867b`](https://github.com/clauderic/dnd-kit/commit/b86867b1426525729357654a62f52fe0554f7f73) Thanks [@github-actions](https://github.com/apps/github-actions)! - Added `visibility: hidden` to the `::backdrop` pseudo element of the `Feedback` plugin to ensure it is not visible on Firefox, there is a bug where it can be shown even with `display: none` when there is a backdrop filter applied to it.
+
+- [#1687](https://github.com/clauderic/dnd-kit/pull/1687) [`a913f5e`](https://github.com/clauderic/dnd-kit/commit/a913f5e68435c5c0a4a073a7437f265bcc0b5d1d) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix calls to `requestAnimationFrame` scheduler in SSR environment
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.12
+  - @dnd-kit/collision@0.1.12
+  - @dnd-kit/geometry@0.1.12
+  - @dnd-kit/state@0.1.12
+
+## 0.1.11
+
+### Patch Changes
+
+- [#1685](https://github.com/clauderic/dnd-kit/pull/1685) [`2370665`](https://github.com/clauderic/dnd-kit/commit/237066598f7da6cd59d78120260788593371e820) Thanks [@clauderic](https://github.com/clauderic)! - Minimize layout thrashing in `Scroller` and `Accessibility` plugins.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.11
+  - @dnd-kit/collision@0.1.11
+  - @dnd-kit/geometry@0.1.11
+  - @dnd-kit/state@0.1.11
+
+## 0.1.10
+
+### Patch Changes
+
+- [`a0f5c44`](https://github.com/clauderic/dnd-kit/commit/a0f5c44985b634e8044415db342354493d201f3e) Thanks [@clauderic](https://github.com/clauderic)! - **Feedback**: Optimistically update `dragOperation.shape` when there are no modifiers for better performance.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.10
+  - @dnd-kit/collision@0.1.10
+  - @dnd-kit/geometry@0.1.10
+  - @dnd-kit/state@0.1.10
+
+## 0.1.9
+
+### Patch Changes
+
+- [`ffdbf52`](https://github.com/clauderic/dnd-kit/commit/ffdbf52a93cbe0c1c785feca57622d4712175a3a) Thanks [@clauderic](https://github.com/clauderic)! - **Feedback**: Revert moving CSS variables to the root as we noticed performance regressions in applications that have complex DOM structures.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.9
+  - @dnd-kit/collision@0.1.9
+  - @dnd-kit/geometry@0.1.9
+  - @dnd-kit/state@0.1.9
+
+## 0.1.8
+
+### Patch Changes
+
+- [#1681](https://github.com/clauderic/dnd-kit/pull/1681) [`14dc059`](https://github.com/clauderic/dnd-kit/commit/14dc05950ad31c50240ee864431112d7f1b70da0) Thanks [@github-actions](https://github.com/apps/github-actions)! - Cache repeated calls to `getComputedStyles` when reading properties that are unlikely to change frequently.
+
+- [`fcd9bb5`](https://github.com/clauderic/dnd-kit/commit/fcd9bb56fafc5ec23ded219bfcd7fdfa31a0caff) Thanks [@clauderic](https://github.com/clauderic)! - Moved the CSS variables to the `[data-dnd-root]` element, which defaults to the `document.body` of the source element to avoid triggering `MutationObserver` callbacks every time the `--dnd-translate` CSS variable is updated.
+
+- [#1681](https://github.com/clauderic/dnd-kit/pull/1681) [`93d3c7c`](https://github.com/clauderic/dnd-kit/commit/93d3c7c8b01d640b017cf8d2cddc69cc47c74ca5) Thanks [@github-actions](https://github.com/apps/github-actions)! - Replace `innerText` with `textContent` for better performance across multiple plugins. This change improves performance since `textContent` is generally more efficient than `innerText` as it doesn't trigger layout reflows and doesn't parse HTML entities.
+
+- [`3c625d6`](https://github.com/clauderic/dnd-kit/commit/3c625d61fc8bdba026d445333c2d1ca1d8489294) Thanks [@clauderic](https://github.com/clauderic)! - Do not use cache when getting element animations to compute projected transforms.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.8
+  - @dnd-kit/collision@0.1.8
+  - @dnd-kit/geometry@0.1.8
+  - @dnd-kit/state@0.1.8
+
+## 0.1.7
+
+### Patch Changes
+
+- [`0618852`](https://github.com/clauderic/dnd-kit/commit/0618852fdeb6948e85d1330febee73e48458e740) Thanks [@clauderic](https://github.com/clauderic)! - Fix a regression with horizontal auto-scrolling.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.7
+  - @dnd-kit/collision@0.1.7
+  - @dnd-kit/geometry@0.1.7
+  - @dnd-kit/state@0.1.7
+
+## 0.1.6
+
+### Patch Changes
+
+- [#1671](https://github.com/clauderic/dnd-kit/pull/1671) [`4f49d1b`](https://github.com/clauderic/dnd-kit/commit/4f49d1b1de317adaa05cc0b7adacbaffda4fd8c2) Thanks [@github-actions](https://github.com/apps/github-actions)! - Improve animation handling and scheduling
+
+  - Refactor Scheduler to be more flexible and generic
+  - Cache successive document.getAnimations() calls
+  - Fix bugs in Safari when projecting animations in DOMRectangle
+  - Fix animation handling in Feedback and Sortable components
+
+- [#1672](https://github.com/clauderic/dnd-kit/pull/1672) [`b18115f`](https://github.com/clauderic/dnd-kit/commit/b18115f4b19c45c76c827921b25e47aad16c91ce) Thanks [@GuillaumeSalles](https://github.com/GuillaumeSalles)! - Improve Feedback clone performance by avoiding innerHtml reset on every mutation
+
+- [#1671](https://github.com/clauderic/dnd-kit/pull/1671) [`ac13c92`](https://github.com/clauderic/dnd-kit/commit/ac13c9298cc8b4eb680039cf17fb10582ab8d023) Thanks [@github-actions](https://github.com/apps/github-actions)! - Optimize pointer move handling in PointerSensor by using the rAF scheduler to batch move events.
+
+- Updated dependencies [[`7ceb799`](https://github.com/clauderic/dnd-kit/commit/7ceb799c7d214bc8223ec845357a0040c28ae40e), [`299389b`](https://github.com/clauderic/dnd-kit/commit/299389befcc747fe8d79231ba32f73afae88615e)]:
+  - @dnd-kit/abstract@0.1.6
+  - @dnd-kit/state@0.1.6
+  - @dnd-kit/collision@0.1.6
+  - @dnd-kit/geometry@0.1.6
+
+## 0.1.5
+
+### Patch Changes
+
+- [#1669](https://github.com/clauderic/dnd-kit/pull/1669) [`8fecc41`](https://github.com/clauderic/dnd-kit/commit/8fecc416fb8503fcb555563a44246cd177677b4e) Thanks [@github-actions](https://github.com/apps/github-actions)! - **PointerSensor**: Add support for multiple activator elements via `activatorElements` option to configure multiple elements that can trigger drag operations.
+
+- [#1669](https://github.com/clauderic/dnd-kit/pull/1669) [`a9c17df`](https://github.com/clauderic/dnd-kit/commit/a9c17df386697dc3236f3ba1b7e319cdf4c5a706) Thanks [@github-actions](https://github.com/apps/github-actions)! - Fix `Feedback` drop animation in Safari by always requesting an animation frame before performing the drop animation.
+
+- [#1669](https://github.com/clauderic/dnd-kit/pull/1669) [`f31589a`](https://github.com/clauderic/dnd-kit/commit/f31589ae579f1ce574207d44e4016e30b82549e9) Thanks [@github-actions](https://github.com/apps/github-actions)! - **KeyboardSensor**: Improve configuration options
+
+  - Add configurable offset for keyboard movements (number or {x, y})
+  - Add static `defaults` and `configure` properties for better configuration
+  - Support different x and y offset values for `offset`
+
+- [#1669](https://github.com/clauderic/dnd-kit/pull/1669) [`616db17`](https://github.com/clauderic/dnd-kit/commit/616db17cdded5974febf69718337db0604c613fc) Thanks [@github-actions](https://github.com/apps/github-actions)! - Refactor PointerSensor configuration:
+
+  - Partially configuring the pointer sensor no longer overrides other defaults. If you wish to override all defaults, you must explicitly set each option.
+  - Moved default pointer sensor configuration into to PointerSensor class.
+  - Add static `defaults` property to PointerSensor class for easier configuration and extension.
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.5
+  - @dnd-kit/collision@0.1.5
+  - @dnd-kit/geometry@0.1.5
+  - @dnd-kit/state@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

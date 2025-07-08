@@ -145,7 +145,11 @@ function getWrapperStyles(
       return {
         ...baseStyles,
         display: 'grid',
-        gridTemplateColumns: 'repeat(5, max-content)',
+        maxWidth: 900,
+        marginInline: 'auto',
+        gridTemplateColumns: 'repeat(auto-fill, 150px)',
+        gridAutoFlow: 'dense',
+        gridAutoRows: '150px',
         justifyContent: 'center',
       };
     case 'horizontal':

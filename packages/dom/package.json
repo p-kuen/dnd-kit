@@ -1,6 +1,6 @@
 {
   "name": "@dnd-kit/dom",
-  "version": "0.1.4",
+  "version": "0.1.19",
   "type": "module",
   "main": "./index.cjs",
   "module": "./index.js",
@@ -74,16 +74,16 @@
     "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist"
   },
   "dependencies": {
-    "@dnd-kit/abstract": "^0.1.4",
-    "@dnd-kit/collision": "^0.1.4",
-    "@dnd-kit/geometry": "^0.1.4",
-    "@dnd-kit/state": "^0.1.4",
+    "@dnd-kit/abstract": "^0.1.19",
+    "@dnd-kit/collision": "^0.1.19",
+    "@dnd-kit/geometry": "^0.1.19",
+    "@dnd-kit/state": "^0.1.19",
     "tslib": "^2.6.2"
   },
   "devDependencies": {
     "@dnd-kit/eslint-config": "*",
     "eslint": "^8.38.0",
-    "tsup": "~8.2.0",
+    "tsup": "8.3.0",
     "typescript": "^5.5.2"
   },
   "publishConfig": {

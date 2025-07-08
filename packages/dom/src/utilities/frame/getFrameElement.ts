@@ -4,6 +4,4 @@ export function getFrameElement(el: Element | undefined) {
   if (refWindow && refWindow.self !== refWindow.parent) {
     return refWindow.frameElement;
   }
-
-  return null;
 }

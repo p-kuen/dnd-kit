@@ -1,6 +1,5 @@
-import {effects} from '@dnd-kit/state';
 import {Plugin} from '@dnd-kit/abstract';
-import {isSafari, generateUniqueId} from '@dnd-kit/dom/utilities';
+import {isSafari, generateUniqueId, scheduler} from '@dnd-kit/dom/utilities';
 
 import type {DragDropManager} from '../../manager/index.ts';
 import {
@@ -16,14 +15,37 @@ import {createHiddenText} from './HiddenText.ts';
 import {createLiveRegion} from './LiveRegion.ts';
 
 interface Options {
+  /**
+   * Optional id that should be used for the accessibility plugin's screen reader instructions and announcements.
+   */
   id?: string;
+  /**
+   * Optional id prefix to use for the accessibility plugin's screen reader instructions and announcements.
+   */
   idPrefix?: {
     description?: string;
     announcement?: string;
   };
+  /**
+   * The announcements to use for the accessibility plugin.
+   */
   announcements?: Announcements;
+  /**
+   * The screen reader instructions to use for the accessibility plugin.
+   */
   screenReaderInstructions?: ScreenReaderInstructions;
+  /**
+   * The number of milliseconds to debounce the announcement updates.
+   *
+   * @remarks
+   * Only the `dragover` and `dragmove` announcements are debounced.
+   *
+   * @default 500
+   */
+  debounce?: number;
 }
+
+const debouncedEvents = ['dragover', 'dragmove'];
 
 export class Accessibility extends Plugin<DragDropManager> {
   constructor(manager: DragDropManager, options?: Options) {
@@ -37,6 +59,7 @@ export class Accessibility extends Plugin<DragDropManager> {
       } = {},
       announcements = defaultAnnouncements,
       screenReaderInstructions = defaultScreenReaderInstructions,
+      debounce: debounceMs = 500,
     } = options ?? {};
 
     const descriptionId = id
@@ -48,16 +71,41 @@ export class Accessibility extends Plugin<DragDropManager> {
 
     let hiddenTextElement: HTMLElement | undefined;
     let liveRegionElement: HTMLElement | undefined;
+    let liveRegionTextNode: Node | undefined;
+    let latestAnnouncement: string | undefined;
+
+    const updateAnnouncement = (value = latestAnnouncement) => {
+      if (!liveRegionTextNode || !value) return;
+      if (liveRegionTextNode?.nodeValue !== value) {
+        liveRegionTextNode.nodeValue = value;
+      }
+    };
+    const scheduleUpdateAnnouncement = () =>
+      scheduler.schedule(updateAnnouncement);
+    const debouncedUpdateAnnouncement = debounce(
+      scheduleUpdateAnnouncement,
+      debounceMs
+    );
 
     const eventListeners = Object.entries(announcements).map(
       ([eventName, getAnnouncement]) => {
         return this.manager.monitor.addEventListener(
           eventName as keyof Announcements,
           (event: any, manager: DragDropManager) => {
+            const element = liveRegionTextNode;
+            if (!element) return;
+
             const announcement = getAnnouncement?.(event, manager);
 
-            if (announcement && liveRegionElement) {
-              liveRegionElement.innerText = announcement;
+            if (announcement && element.nodeValue !== announcement) {
+              latestAnnouncement = announcement;
+
+              if (debouncedEvents.includes(eventName)) {
+                debouncedUpdateAnnouncement();
+              } else {
+                scheduleUpdateAnnouncement();
+                debouncedUpdateAnnouncement.cancel();
+              }
             }
           }
         );
@@ -65,64 +113,119 @@ export class Accessibility extends Plugin<DragDropManager> {
     );
 
     const initialize = () => {
-      hiddenTextElement = createHiddenText(
-        descriptionId,
-        screenReaderInstructions.draggable
-      );
-      liveRegionElement = createLiveRegion(announcementId);
+      let elements = [];
 
-      document.body.append(hiddenTextElement, liveRegionElement);
+      if (!hiddenTextElement?.isConnected) {
+        hiddenTextElement = createHiddenText(
+          descriptionId,
+          screenReaderInstructions.draggable
+        );
+        elements.push(hiddenTextElement);
+      }
+
+      if (!liveRegionElement?.isConnected) {
+        liveRegionElement = createLiveRegion(announcementId);
+        liveRegionTextNode = document.createTextNode('');
+        liveRegionElement.appendChild(liveRegionTextNode);
+        elements.push(liveRegionElement);
+      }
+
+      if (elements.length > 0) {
+        document.body.append(...elements);
+      }
     };
 
-    const cleanupEffects = effects(() => {
-      for (const draggable of manager.registry.draggables.value) {
-        const {element, handle} = draggable;
-        const activator = handle ?? element;
+    const mutations = new Set<() => void>();
+
+    function executeMutations() {
+      for (const operation of mutations) {
+        operation();
+      }
+    }
+
+    this.registerEffect(() => {
+      mutations.clear();
+
+      // Re-run effect when any of the draggable elements change
+      for (const draggable of this.manager.registry.draggables.value) {
+        const activator = draggable.handle ?? draggable.element;
 
         if (activator) {
           if (!hiddenTextElement || !liveRegionElement) {
-            initialize();
+            mutations.add(initialize);
           }
 
           if (
             (!isFocusable(activator) || isSafari()) &&
             !activator.hasAttribute('tabindex')
           ) {
-            activator.setAttribute('tabindex', '0');
+            mutations.add(() => activator.setAttribute('tabindex', '0'));
           }
 
           if (
             !activator.hasAttribute('role') &&
             !(activator.tagName.toLowerCase() === 'button')
           ) {
-            activator.setAttribute('role', defaultAttributes.role);
+            mutations.add(() =>
+              activator.setAttribute('role', defaultAttributes.role)
+            );
           }
 
-          if (!activator.hasAttribute('role-description')) {
-            activator.setAttribute(
-              'aria-roledescription',
-              defaultAttributes.roleDescription
+          if (!activator.hasAttribute('aria-roledescription')) {
+            mutations.add(() =>
+              activator.setAttribute(
+                'aria-roledescription',
+                defaultAttributes.roleDescription
+              )
             );
           }
 
           if (!activator.hasAttribute('aria-describedby')) {
-            activator.setAttribute('aria-describedby', descriptionId);
+            mutations.add(() =>
+              activator.setAttribute('aria-describedby', descriptionId)
+            );
           }
 
           for (const key of ['aria-pressed', 'aria-grabbed']) {
-            activator.setAttribute(key, String(draggable.isDragging));
+            const value = String(draggable.isDragging);
+
+            if (activator.getAttribute(key) !== value) {
+              mutations.add(() => activator.setAttribute(key, value));
+            }
           }
 
-          activator.setAttribute('aria-disabled', String(draggable.disabled));
+          const disabled = String(draggable.disabled);
+
+          if (activator.getAttribute('aria-disabled') !== disabled) {
+            mutations.add(() =>
+              activator.setAttribute('aria-disabled', disabled)
+            );
+          }
         }
       }
 
-      this.destroy = () => {
-        hiddenTextElement?.remove();
-        liveRegionElement?.remove();
-        eventListeners.forEach((unsubscribe) => unsubscribe());
-        cleanupEffects();
-      };
+      if (mutations.size > 0) {
+        scheduler.schedule(executeMutations);
+      }
     });
+
+    this.destroy = () => {
+      super.destroy();
+      hiddenTextElement?.remove();
+      liveRegionElement?.remove();
+      eventListeners.forEach((unsubscribe) => unsubscribe());
+    };
   }
+}
+
+function debounce(fn: () => void, wait: number) {
+  let timeout: NodeJS.Timeout | undefined;
+  const debounced = () => {
+    clearTimeout(timeout);
+    timeout = setTimeout(fn, wait);
+  };
+
+  debounced.cancel = () => clearTimeout(timeout);
+
+  return debounced;
 }

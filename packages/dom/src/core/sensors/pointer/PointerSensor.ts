@@ -13,6 +13,8 @@ import {
   isPointerEvent,
   Listeners,
   getFrameTransform,
+  scheduler,
+  isTextInput,
 } from '@dnd-kit/dom/utilities';
 
 import type {DragDropManager} from '../../manager/index.ts';
@@ -33,6 +35,8 @@ export interface ActivationConstraints {
   delay?: DelayConstraint;
 }
 
+type Maybe<T> = T | undefined;
+
 export interface PointerSensorOptions {
   activationConstraints?:
     | ActivationConstraints
@@ -40,7 +44,46 @@ export interface PointerSensorOptions {
         event: PointerEvent,
         source: Draggable
       ) => ActivationConstraints | undefined);
+  activatorElements?:
+    | Maybe<Element>[]
+    | ((source: Draggable) => Maybe<Element>[]);
 }
+
+const defaults = Object.freeze<PointerSensorOptions>({
+  activationConstraints(event, source) {
+    const {pointerType, target} = event;
+
+    if (
+      pointerType === 'mouse' &&
+      isElement(target) &&
+      (source.handle === target || source.handle?.contains(target))
+    ) {
+      return undefined;
+    }
+
+    if (pointerType === 'touch') {
+      return {
+        delay: {value: 250, tolerance: 5},
+      };
+    }
+
+    if (isTextInput(target) && !event.defaultPrevented) {
+      return {
+        delay: {value: 200, tolerance: 0},
+      };
+    }
+
+    return {
+      delay: {value: 200, tolerance: 10},
+      distance: {value: 5},
+    };
+  },
+});
+
+type LatestState = {
+  event: PointerEvent | undefined;
+  coordinates: Coordinates | undefined;
+};
 
 /**
  * The PointerSensor class is an input sensor that handles Pointer events,
@@ -69,24 +112,45 @@ export class PointerSensor extends Sensor<
     this.handleKeyDown = this.handleKeyDown.bind(this);
   }
 
+  protected activationConstraints(event: PointerEvent, source: Draggable) {
+    const {activationConstraints = defaults.activationConstraints} =
+      this.options ?? {};
+
+    const constraints =
+      typeof activationConstraints === 'function'
+        ? activationConstraints(event, source)
+        : activationConstraints;
+
+    return constraints;
+  }
+
   public bind(source: Draggable, options = this.options) {
     const unbind = effect(() => {
-      const target = source.handle ?? source.element;
+      const controller = new AbortController();
+      const {signal} = controller;
       const listener: EventListener = (event: Event) => {
         if (isPointerEvent(event)) {
           this.handlePointerDown(event, source, options);
         }
       };
+      let targets = [source.handle ?? source.element];
 
-      if (target) {
-        patchWindow(target.ownerDocument.defaultView);
-
-        target.addEventListener('pointerdown', listener);
-
-        return () => {
-          target.removeEventListener('pointerdown', listener);
-        };
+      if (options?.activatorElements) {
+        if (Array.isArray(options.activatorElements)) {
+          targets = options.activatorElements;
+        } else {
+          targets = options.activatorElements(source);
+        }
       }
+
+      for (const target of targets) {
+        if (!target) continue;
+
+        patchWindow(target.ownerDocument.defaultView);
+        target.addEventListener('pointerdown', listener, {signal});
+      }
+
+      return () => controller.abort();
     });
 
     return unbind;
@@ -122,11 +186,7 @@ export class PointerSensor extends Sensor<
       y: event.clientY * offset.scaleY + offset.y,
     };
 
-    const {activationConstraints} = options;
-    const constraints =
-      typeof activationConstraints === 'function'
-        ? activationConstraints(event, source)
-        : activationConstraints;
+    const constraints = this.activationConstraints(event, source);
 
     (event as any).sensor = this;
 
@@ -154,7 +214,7 @@ export class PointerSensor extends Sensor<
       {
         type: 'pointermove',
         listener: (event: PointerEvent) =>
-          this.handlePointerMove(event, source, options),
+          this.handlePointerMove(event, source),
       },
       {
         type: 'pointerup',
@@ -182,11 +242,22 @@ export class PointerSensor extends Sensor<
     this.#cleanup.add(cleanup);
   }
 
-  protected handlePointerMove(
-    event: PointerEvent,
-    source: Draggable,
-    options: PointerSensorOptions
-  ) {
+  private latest: LatestState = {
+    event: undefined,
+    coordinates: undefined,
+  };
+
+  protected handleMove = () => {
+    const {event, coordinates: to} = this.latest;
+
+    if (!event || !to) {
+      return;
+    }
+
+    this.manager.actions.move({event, to});
+  };
+
+  protected handlePointerMove(event: PointerEvent, source: Draggable) {
     const coordinates = {
       x: event.clientX,
       y: event.clientY,
@@ -201,7 +272,10 @@ export class PointerSensor extends Sensor<
       event.preventDefault();
       event.stopPropagation();
 
-      this.manager.actions.move({event, to: coordinates});
+      this.latest.event = event;
+      this.latest.coordinates = coordinates;
+
+      scheduler.schedule(this.handleMove);
       return;
     }
 
@@ -213,11 +287,7 @@ export class PointerSensor extends Sensor<
       x: coordinates.x - this.initialCoordinates.x,
       y: coordinates.y - this.initialCoordinates.y,
     };
-    const {activationConstraints} = options;
-    const constraints =
-      typeof activationConstraints === 'function'
-        ? activationConstraints(event, source)
-        : activationConstraints;
+    const constraints = this.activationConstraints(event, source);
     const {distance, delay} = constraints ?? {};
 
     if (distance) {
@@ -336,6 +406,10 @@ export class PointerSensor extends Sensor<
   }
 
   protected cleanup() {
+    this.latest = {
+      event: undefined,
+      coordinates: undefined,
+    };
     this.#cleanup.forEach((cleanup) => cleanup());
     this.#cleanup.clear();
   }
@@ -346,6 +420,8 @@ export class PointerSensor extends Sensor<
   }
 
   static configure = configurator(PointerSensor);
+
+  static defaults = defaults;
 }
 
 function isCapturedBySensor(event: Event) {

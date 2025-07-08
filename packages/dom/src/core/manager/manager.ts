@@ -1,12 +1,11 @@
 import {
   DragDropManager as AbstractDragDropManager,
   DragDropManagerInput,
-  type Renderer,
+  type Data,
   type Modifiers,
   type Plugins,
   type Sensors,
 } from '@dnd-kit/abstract';
-import {isElement} from '@dnd-kit/dom/utilities';
 
 import type {Draggable, Droppable} from '../entities/index.ts';
 import {
@@ -29,38 +28,14 @@ export const defaultPreset: {
 } = {
   modifiers: [],
   plugins: [Accessibility, AutoScroller, Cursor, Feedback, PreventSelection],
-  sensors: [
-    PointerSensor.configure({
-      activationConstraints(event, source) {
-        const {pointerType, target} = event;
-
-        if (
-          pointerType === 'mouse' &&
-          isElement(target) &&
-          (source.handle === target || source.handle?.contains(target))
-        ) {
-          return undefined;
-        }
-
-        if (pointerType === 'touch') {
-          return {
-            delay: {value: 250, tolerance: 5},
-          };
-        }
-        return {
-          delay: {value: 200, tolerance: 10},
-          distance: {value: 5},
-        };
-      },
-    }),
-    KeyboardSensor,
-  ],
+  sensors: [PointerSensor, KeyboardSensor],
 };
 
 export class DragDropManager<
-  T extends Draggable = Draggable,
-  U extends Droppable = Droppable,
-> extends AbstractDragDropManager<Draggable, Droppable> {
+  T extends Data = Data,
+  U extends Draggable<T> = Draggable<T>,
+  V extends Droppable<T> = Droppable<T>,
+> extends AbstractDragDropManager<U, V> {
   constructor(input: Input = {}) {
     const {
       plugins = defaultPreset.plugins,

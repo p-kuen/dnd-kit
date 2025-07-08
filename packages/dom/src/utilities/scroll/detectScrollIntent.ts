@@ -38,7 +38,7 @@ export function detectScrollIntent(
   const {rect, isTop, isBottom, isLeft, isRight} =
     getScrollPosition(scrollableElement);
   const frameTransform = getFrameTransform(scrollableElement);
-  const computedStyles = getComputedStyles(scrollableElement);
+  const computedStyles = getComputedStyles(scrollableElement, true);
   const parsedTransform = parseTransform(computedStyles);
   const isXAxisInverted =
     parsedTransform !== null ? parsedTransform?.scaleX < 0 : false;
@@ -106,8 +106,8 @@ export function detectScrollIntent(
   ) {
     // Scroll Right (or Left if inverted)
     direction.x = isXAxisInverted
-      ? ScrollDirection.Forward
-      : ScrollDirection.Reverse;
+      ? ScrollDirection.Reverse
+      : ScrollDirection.Forward;
     speed.x =
       acceleration *
       Math.abs(
@@ -122,8 +122,8 @@ export function detectScrollIntent(
   ) {
     // Scroll Left (or Right if inverted)
     direction.x = isXAxisInverted
-      ? ScrollDirection.Reverse
-      : ScrollDirection.Forward;
+      ? ScrollDirection.Forward
+      : ScrollDirection.Reverse;
     speed.x =
       acceleration *
       Math.abs(

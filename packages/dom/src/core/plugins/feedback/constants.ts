@@ -1,4 +1,5 @@
 export const ATTR_PREFIX = 'data-dnd-';
+export const DROPPING_ATTRIBUTE = `${ATTR_PREFIX}dropping`;
 export const CSS_PREFIX = '--dnd-';
 export const ATTRIBUTE = `${ATTR_PREFIX}dragging`;
 export const PLACEHOLDER_ATTRIBUTE = `${ATTR_PREFIX}placeholder`;
@@ -28,7 +29,7 @@ export const CSS_RULES = `
     max-width: var(${CSS_PREFIX}width, auto);
     height: var(${CSS_PREFIX}height, auto);
     max-height: var(${CSS_PREFIX}height, auto);
-    box-sizing: border-box;
+    transition: var(${CSS_PREFIX}transition) !important;
   }
 
   :root [${PLACEHOLDER_ATTRIBUTE}] {
@@ -42,16 +43,16 @@ export const CSS_RULES = `
   [${ATTRIBUTE}] * {
     pointer-events: none !important;
   }
-  [${ATTRIBUTE}][style*='${CSS_PREFIX}translate'] {
+
+  [${ATTRIBUTE}]:not([${DROPPING_ATTRIBUTE}]) {
     translate: var(${CSS_PREFIX}translate) !important;
   }
-  [style*='${CSS_PREFIX}transition'] {
-    transition: var(${CSS_PREFIX}transition) !important;
-  }
-  [style*='${CSS_PREFIX}scale'] {
+
+  [${ATTRIBUTE}][style*='${CSS_PREFIX}scale'] {
     scale: var(${CSS_PREFIX}scale) !important;
     transform-origin: var(${CSS_PREFIX}transform-origin) !important;
   }
+
   @layer {
     :where([${ATTRIBUTE}][popover]) {
       overflow: visible;
@@ -69,6 +70,7 @@ export const CSS_RULES = `
   }
   [${ATTRIBUTE}]::backdrop, [${ATTR_PREFIX}overlay]:not([${ATTRIBUTE}]) {
     display: none;
+    visibility: hidden;
   }
 `
   .replace(/\n+/g, ' ')

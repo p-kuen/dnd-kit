@@ -1,5 +1,125 @@
 # @dnd-kit/collision
 
+## 0.1.19
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.19
+  - @dnd-kit/geometry@0.1.19
+
+## 0.1.18
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.18
+  - @dnd-kit/geometry@0.1.18
+
+## 0.1.17
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.17
+  - @dnd-kit/geometry@0.1.17
+
+## 0.1.16
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.16
+  - @dnd-kit/geometry@0.1.16
+
+## 0.1.15
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.15
+  - @dnd-kit/geometry@0.1.15
+
+## 0.1.14
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.14
+  - @dnd-kit/geometry@0.1.14
+
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.13
+  - @dnd-kit/geometry@0.1.13
+
+## 0.1.12
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.12
+  - @dnd-kit/geometry@0.1.12
+
+## 0.1.11
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.11
+  - @dnd-kit/geometry@0.1.11
+
+## 0.1.10
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.10
+  - @dnd-kit/geometry@0.1.10
+
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.9
+  - @dnd-kit/geometry@0.1.9
+
+## 0.1.8
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.8
+  - @dnd-kit/geometry@0.1.8
+
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.7
+  - @dnd-kit/geometry@0.1.7
+
+## 0.1.6
+
+### Patch Changes
+
+- Updated dependencies [[`7ceb799`](https://github.com/clauderic/dnd-kit/commit/7ceb799c7d214bc8223ec845357a0040c28ae40e)]:
+  - @dnd-kit/abstract@0.1.6
+  - @dnd-kit/geometry@0.1.6
+
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @dnd-kit/abstract@0.1.5
+  - @dnd-kit/geometry@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

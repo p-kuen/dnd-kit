@@ -1,5 +1,43 @@
 # @dnd-kit/state
 
+## 0.1.19
+
+### Patch Changes
+
+- [#1724](https://github.com/clauderic/dnd-kit/pull/1724) [`d848327`](https://github.com/clauderic/dnd-kit/commit/d848327b242c6714b36207071ad30e6b4183e865) Thanks [@project42da](https://github.com/project42da)! - Replaced JSON.stringify() with a recursive comparison for plain objects.
+
+## 0.1.18
+
+## 0.1.17
+
+## 0.1.16
+
+## 0.1.15
+
+## 0.1.14
+
+## 0.1.13
+
+## 0.1.12
+
+## 0.1.11
+
+## 0.1.10
+
+## 0.1.9
+
+## 0.1.8
+
+## 0.1.7
+
+## 0.1.6
+
+### Patch Changes
+
+- [`299389b`](https://github.com/clauderic/dnd-kit/commit/299389befcc747fe8d79231ba32f73afae88615e) Thanks [@clauderic](https://github.com/clauderic)! - Fix cycle in `ValueHistory` setter for current
+
+## 0.1.5
+
 ## 0.1.4
 
 ## 0.1.3

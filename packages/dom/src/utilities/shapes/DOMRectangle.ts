@@ -1,11 +1,14 @@
 import {Rectangle, type BoundingRectangle} from '@dnd-kit/geometry';
 
+import {applyTransform} from '../transform/applyTransform.ts';
 import {inverseTransform} from '../transform/inverseTransform.ts';
 import {getComputedStyles} from '../styles/getComputedStyles.ts';
 import {parseTransform, type Transform} from '../transform/index.ts';
 import {getBoundingRectangle} from '../bounding-rectangle/getBoundingRectangle.ts';
 import {getFrameTransform} from '../frame/getFrameTransform.ts';
 import {isKeyframeEffect} from '../type-guards/isKeyframeEffect.ts';
+import {forceFinishAnimations} from '../animations/forceFinishAnimations.ts';
+import {isSafari} from '../execution-context/isSafari.ts';
 
 export interface DOMRectangleOptions {
   getBoundingClientRect?: (element: Element) => BoundingRectangle;
@@ -21,7 +24,11 @@ export class DOMRectangle extends Rectangle {
       ignoreTransforms,
       getBoundingClientRect = getBoundingRectangle,
     } = options;
-    const resetAnimations = forceFinishAnimations(element);
+    const resetAnimations = forceFinishAnimations(element, {
+      properties: ['transform', 'translate', 'scale', 'width', 'height'],
+      isValidTarget: (target) =>
+        (target !== element || isSafari()) && target.contains(element),
+    });
     const boundingRectangle = getBoundingClientRect(element);
     let {top, left, width, height} = boundingRectangle;
     let updated: BoundingRectangle | undefined;
@@ -34,9 +41,9 @@ export class DOMRectangle extends Rectangle {
       y: parsedTransform?.scaleY ?? 1,
     };
 
-    resetAnimations?.();
+    const projectedTransform = getProjectedTransform(element, computedStyles);
 
-    const projectedTransform = getProjectedTransform(element);
+    resetAnimations?.();
 
     if (parsedTransform) {
       updated = inverseTransform(
@@ -58,11 +65,17 @@ export class DOMRectangle extends Rectangle {
       height: updated?.height ?? height,
     };
 
-    if (projectedTransform && !ignoreTransforms) {
-      top = top + projectedTransform.y;
-      left = left + projectedTransform.x;
-      width = width * projectedTransform.scaleX;
-      height = height * projectedTransform.scaleY;
+    if (projectedTransform && !ignoreTransforms && updated) {
+      const projected = applyTransform(
+        updated,
+        projectedTransform,
+        computedStyles.transformOrigin
+      );
+
+      top = projected.top;
+      left = projected.left;
+      width = projected.width;
+      height = projected.height;
       scale.x = projectedTransform.scaleX;
       scale.y = projectedTransform.scaleY;
     }
@@ -93,13 +106,18 @@ export class DOMRectangle extends Rectangle {
 /*
  * Get the projected transform of an element based on its final keyframe
  */
-function getProjectedTransform(element: Element): Transform | null {
+function getProjectedTransform(
+  element: Element,
+  computedStyles: CSSStyleDeclaration
+): Transform | null {
+  // Always get the latest animations on the element itself
   const animations = element.getAnimations();
   let projectedTransform: Transform | null = null;
 
   if (!animations.length) return null;
 
   for (const animation of animations) {
+    if (animation.playState !== 'running') continue;
     const keyframes = isKeyframeEffect(animation.effect)
       ? animation.effect.getKeyframes()
       : [];
@@ -107,13 +125,20 @@ function getProjectedTransform(element: Element): Transform | null {
 
     if (!keyframe) continue;
 
-    const {transform = '', translate = '', scale = ''} = keyframe;
+    const {transform, translate, scale} = keyframe;
 
     if (transform || translate || scale) {
       const parsedTransform = parseTransform({
-        transform: typeof transform === 'string' ? transform : '',
-        translate: typeof translate === 'string' ? translate : '',
-        scale: typeof scale === 'string' ? scale : '',
+        transform:
+          typeof transform === 'string' && transform
+            ? transform
+            : computedStyles.transform,
+        translate:
+          typeof translate === 'string' && translate
+            ? translate
+            : computedStyles.translate,
+        scale:
+          typeof scale === 'string' && scale ? scale : computedStyles.scale,
       });
 
       if (parsedTransform) {
@@ -131,51 +156,4 @@ function getProjectedTransform(element: Element): Transform | null {
   }
 
   return projectedTransform;
-}
-
-/*
- * Force animations on ancestors of the element into their end state
- * and return a function to reset them back to their current state.
- *
- * This is useful as it allows us to immediately calculate the final position
- * of an element without having to wait for the animations to finish.
- */
-function forceFinishAnimations(element: Element): (() => void) | undefined {
-  const animations = element.ownerDocument
-    .getAnimations()
-    .filter((animation) => {
-      if (isKeyframeEffect(animation.effect)) {
-        const {target} = animation.effect;
-
-        if (target !== element && target?.contains(element)) {
-          return animation.effect.getKeyframes().some((keyframe) => {
-            const {transform, translate, scale, width, height} = keyframe;
-
-            return transform || translate || scale || width || height;
-          });
-        }
-      }
-    })
-    .map((animation) => {
-      const {effect, currentTime} = animation;
-      const duration = effect?.getComputedTiming().duration;
-
-      if (animation.pending) return;
-
-      if (
-        typeof duration == 'number' &&
-        typeof currentTime == 'number' &&
-        currentTime < duration
-      ) {
-        animation.currentTime = duration;
-
-        return () => {
-          animation.currentTime = currentTime;
-        };
-      }
-    });
-
-  if (animations.length > 0) {
-    return () => animations.forEach((reset) => reset?.());
-  }
 }

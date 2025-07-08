@@ -1,5 +1,5 @@
 import {
-  effect,
+  effects,
   reactive,
   untracked,
   type CleanupFunction,
@@ -8,20 +8,20 @@ import {configurator, Plugin} from '@dnd-kit/abstract';
 import {
   animateTransform,
   DOMRectangle,
-  isKeyboardEvent,
   getComputedStyles,
   getDocument,
+  getFinalKeyframe,
   getFrameTransform,
   getWindow,
   isHTMLElement,
+  isKeyboardEvent,
   parseTranslate,
   showPopover,
+  Styles,
   supportsPopover,
   supportsStyle,
-  Styles,
-  isKeyframeEffect,
 } from '@dnd-kit/dom/utilities';
-import {Coordinates, Rectangle} from '@dnd-kit/geometry';
+import {Coordinates, Point, Rectangle} from '@dnd-kit/geometry';
 
 import type {DragDropManager} from '../../manager/index.ts';
 import type {Draggable} from '../../entities/index.ts';
@@ -30,6 +30,7 @@ import {
   ATTRIBUTE,
   CSS_PREFIX,
   CSS_RULES,
+  DROPPING_ATTRIBUTE,
   IGNORED_ATTRIBUTES,
   IGNORED_STYLES,
 } from './constants.ts';
@@ -57,6 +58,13 @@ interface State {
   };
 }
 
+interface StyleSheetRegistration {
+  cleanup: CleanupFunction;
+  instances: Set<Feedback>;
+}
+
+const styleSheetRegistry = new Map<Document, StyleSheetRegistration>();
+
 export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
   @reactive
   public accessor overlay: Element | undefined;
@@ -67,7 +75,7 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
   };
 
   constructor(manager: DragDropManager, options?: FeedbackOptions) {
-    super(manager);
+    super(manager, options);
 
     this.registerEffect(this.#injectStyles);
     this.registerEffect(this.#render);
@@ -111,7 +119,6 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
       y: elementFrameTransform.scaleY / frameTransform.scaleY,
     };
 
-    let cleanup: CleanupFunction | undefined;
     let {width, height, top, left} = shape;
 
     if (crossFrame) {
@@ -119,9 +126,36 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
       height = height / scaleDelta.y;
     }
 
+    let elementMutationObserver: MutationObserver | undefined;
+    let documentMutationObserver: MutationObserver | undefined;
     const styles = new Styles(feedbackElement);
-    const {transition, translate} = getComputedStyles(element);
+    const {
+      transition,
+      translate,
+      boxSizing,
+      paddingBlockStart,
+      paddingBlockEnd,
+      paddingInlineStart,
+      paddingInlineEnd,
+      borderInlineStartWidth,
+      borderInlineEndWidth,
+      borderBlockStartWidth,
+      borderBlockEndWidth,
+    } = getComputedStyles(element);
     const clone = feedback === 'clone';
+    const contentBox = boxSizing === 'content-box';
+    const widthOffset = contentBox
+      ? parseInt(paddingInlineStart) +
+        parseInt(paddingInlineEnd) +
+        parseInt(borderInlineStartWidth) +
+        parseInt(borderInlineEndWidth)
+      : 0;
+    const heightOffset = contentBox
+      ? parseInt(paddingBlockStart) +
+        parseInt(paddingBlockEnd) +
+        parseInt(borderBlockStartWidth) +
+        parseInt(borderBlockEndWidth)
+      : 0;
 
     const placeholder =
       feedback !== 'move' && !this.overlay
@@ -213,14 +247,18 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
     const tX = transform.x * frameTransform.scaleX + initialTranslate.x;
     const tY = transform.y * frameTransform.scaleY + initialTranslate.y;
     const translateString = `${tX}px ${tY}px 0`;
+    const transitionString = transition
+      ? `${transition}, translate 0ms linear`
+      : '';
 
     styles.set(
       {
-        width: width,
-        height: height,
+        width: width - widthOffset,
+        height: height - heightOffset,
         top: projected.top,
         left: projected.left,
         translate: translateString,
+        transition: transitionString,
         scale: crossFrame ? `${scaleDelta.x} ${scaleDelta.y}` : '',
         'transform-origin': `${transformOrigin.x * 100}% ${transformOrigin.y * 100}%`,
       },
@@ -261,15 +299,14 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
 
       styles.set(
         {
-          width: placeholderShape.width,
-          height: placeholderShape.height,
+          width: placeholderShape.width - widthOffset,
+          height: placeholderShape.height - heightOffset,
           top: top + dY,
           left: left + dX,
         },
         CSS_PREFIX
       );
-
-      const window = getWindow(element);
+      elementMutationObserver?.takeRecords();
 
       /* Table cells need to have their width set explicitly because the feedback element is position fixed */
       if (isTableRow(element) && isTableRow(placeholder)) {
@@ -283,54 +320,87 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
         }
       }
 
-      dragOperation.shape = new DOMRectangle(element);
+      dragOperation.shape = new DOMRectangle(feedbackElement);
     });
 
     /* Initialize drag operation shape */
-    dragOperation.shape = new DOMRectangle(feedbackElement);
+    const initialShape = new DOMRectangle(feedbackElement);
+    untracked(() => (dragOperation.shape = initialShape));
+
+    const feedbackWindow = getWindow(feedbackElement);
+    const handleWindowResize = (event: Event) => {
+      this.manager.actions.stop({event});
+    };
+
+    if (isKeyboardOperation) {
+      feedbackWindow.addEventListener('resize', handleWindowResize);
+    }
 
     if (untracked(() => source.status) === 'idle') {
       requestAnimationFrame(() => (source.status = 'dragging'));
     }
 
-    let elementMutationObserver: MutationObserver | undefined;
-    let documentMutationObserver: MutationObserver | undefined;
-
     if (placeholder) {
       resizeObserver.observe(placeholder);
 
-      elementMutationObserver = new MutationObserver(() => {
-        for (const attribute of Array.from(element.attributes)) {
+      elementMutationObserver = new MutationObserver((mutations) => {
+        let hasChildrenMutations = false;
+
+        for (const mutation of mutations) {
+          if (mutation.target !== element) {
+            hasChildrenMutations = true;
+            continue;
+          }
+
+          if (mutation.type !== 'attributes') {
+            // Should never happen, but defensive programming just in case
+            continue;
+          }
+
+          // Attribute name is guaranteed to be non-null if type is "attributes"
+          // https://developer.mozilla.org/en-US/docs/Web/API/MutationRecord/attributeName#value
+          const attributeName = mutation.attributeName!;
+
           if (
-            attribute.name.startsWith('aria-') ||
-            IGNORED_ATTRIBUTES.includes(attribute.name)
+            attributeName.startsWith('aria-') ||
+            IGNORED_ATTRIBUTES.includes(attributeName)
           ) {
             continue;
           }
 
-          if (attribute.name === 'style') {
+          const attributeValue = element.getAttribute(attributeName);
+
+          if (attributeName === 'style') {
             if (supportsStyle(element) && supportsStyle(placeholder)) {
-              for (const key of Object.values(element.style)) {
+              const styles = element.style;
+
+              for (const key of Array.from(placeholder.style)) {
+                if (styles.getPropertyValue(key) === '') {
+                  placeholder.style.removeProperty(key);
+                }
+              }
+
+              for (const key of Array.from(styles)) {
                 if (
-                  key.startsWith(CSS_PREFIX) ||
-                  IGNORED_STYLES.includes(key)
+                  IGNORED_STYLES.includes(key) ||
+                  key.startsWith(CSS_PREFIX)
                 ) {
                   continue;
                 }
 
-                placeholder.style.setProperty(
-                  key,
-                  element.style.getPropertyValue(key)
-                );
+                const value = styles.getPropertyValue(key);
+
+                placeholder.style.setProperty(key, value);
               }
             }
-            continue;
+          } else if (attributeValue !== null) {
+            placeholder.setAttribute(attributeName, attributeValue);
+          } else {
+            placeholder.removeAttribute(attributeName);
           }
-
-          placeholder.setAttribute(attribute.name, attribute.value);
         }
 
-        if (clone) {
+        if (hasChildrenMutations && clone) {
           placeholder.innerHTML = element.innerHTML;
         }
       });
@@ -338,6 +408,7 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
       elementMutationObserver.observe(element, {
         attributes: true,
         subtree: true,
+        childList: true,
       });
 
       /* Make sure the placeholder and the source element positions are always in sync */
@@ -378,40 +449,6 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
       });
     }
 
-    // Update transform on move
-    const cleanupEffect = effect(() => {
-      const {transform, status} = dragOperation;
-
-      if (!transform.x && !transform.y && !state.current.translate) {
-        return;
-      }
-
-      if (status.dragging) {
-        const translateTransition = isKeyboardOperation
-          ? '250ms cubic-bezier(0.25, 1, 0.5, 1)'
-          : '0ms linear';
-
-        const initialTranslate = initial.translate ?? {x: 0, y: 0};
-        const x = transform.x / frameTransform.scaleX + initialTranslate.x;
-        const y = transform.y / frameTransform.scaleY + initialTranslate.y;
-
-        styles.set(
-          {
-            transition: `${transition}, translate ${translateTransition}`,
-            translate: `${x}px ${y}px 0`,
-          },
-          CSS_PREFIX
-        );
-
-        dragOperation.shape = new DOMRectangle(feedbackElement);
-
-        state.current.translate = {
-          x,
-          y,
-        };
-      }
-    });
-
     const id = manager.dragOperation.source?.id;
 
     const restoreFocus = () => {
@@ -426,12 +463,11 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
         element.focus();
       }
     };
-
-    let dropEffectCleanup: CleanupFunction | undefined;
-    cleanup = () => {
+    const cleanup = () => {
       elementMutationObserver?.disconnect();
       documentMutationObserver?.disconnect();
       resizeObserver.disconnect();
+      feedbackWindow.removeEventListener('resize', handleWindowResize);
 
       if (supportsPopover(feedbackElement)) {
         feedbackElement.removeEventListener(
@@ -458,139 +494,224 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
       }
 
       placeholder?.remove();
-
-      cleanupEffect();
-      dropEffectCleanup?.();
     };
 
-    // Drop animation
-    dropEffectCleanup = effect(() => {
-      if (dragOperation.status.dropped) {
-        const onComplete = cleanup;
-        cleanup = undefined;
+    const cleanupEffects = effects(
+      // Update transform on move
+      () => {
+        const {transform, status} = dragOperation;
 
-        source.status = 'dropping';
-
-        let translate = state.current.translate;
-        const moved = translate != null;
-
-        if (!translate && element !== feedbackElement) {
-          translate = {
-            x: 0,
-            y: 0,
-          };
-        }
-
-        if (!translate) {
-          onComplete?.();
+        if (!transform.x && !transform.y && !state.current.translate) {
           return;
         }
 
-        manager.renderer.rendering.then(() => {
-          /* Force the source element to be promoted to the top layer before animating it */
-          showPopover(feedbackElement);
+        if (status.dragging) {
+          const initialTranslate = initial.translate ?? {x: 0, y: 0};
+          const translate = {
+            x: transform.x / frameTransform.scaleX + initialTranslate.x,
+            y: transform.y / frameTransform.scaleY + initialTranslate.y,
+          };
+          const previousTranslate = state.current.translate;
+          const modifiers = untracked(() => dragOperation.modifiers);
+          const currentShape = untracked(() => dragOperation.shape?.current);
+          const translateTransition = isKeyboardOperation
+            ? '250ms cubic-bezier(0.25, 1, 0.5, 1)'
+            : '0ms linear';
 
-          const target = placeholder ?? element;
-          const animations = feedbackElement.getAnimations();
+          styles.set(
+            {
+              transition: `${transition}, translate ${translateTransition}`,
+              translate: `${translate.x}px ${translate.y}px 0`,
+            },
+            CSS_PREFIX
+          );
+          elementMutationObserver?.takeRecords();
 
-          if (animations.length) {
-            animations.forEach((animation) => {
-              const {effect} = animation;
+          if (
+            currentShape &&
+            currentShape !== initialShape &&
+            previousTranslate &&
+            !modifiers.length
+          ) {
+            const delta = Point.delta(translate, previousTranslate);
 
-              if (
-                isKeyframeEffect(effect) &&
-                effect.getKeyframes().some((keyframe) => keyframe.translate)
-              ) {
-                animation.finish();
-              }
-            });
+            dragOperation.shape = Rectangle.from(
+              currentShape.boundingRectangle
+            ).translate(
+              // Need to take into account frame transform when optimistically updating shape
+              delta.x * frameTransform.scaleX,
+              delta.y * frameTransform.scaleY
+            );
+          } else {
+            dragOperation.shape = new DOMRectangle(feedbackElement);
           }
 
-          const options = {
-            frameTransform: isSameFrame(feedbackElement, target)
-              ? null
-              : undefined,
-          };
-          const current = new DOMRectangle(feedbackElement, options);
-          const final = new DOMRectangle(target, options);
-          const delta = Rectangle.delta(current, final, source.alignment);
-          const finalTranslate = {
-            x: translate.x - delta.x,
-            y: translate.y - delta.y,
-          };
-          const heightKeyframes =
-            Math.round(current.intrinsicHeight) !==
-            Math.round(final.intrinsicHeight)
-              ? {
-                  minHeight: [
-                    `${current.intrinsicHeight}px`,
-                    `${final.intrinsicHeight}px`,
-                  ],
-                  maxHeight: [
-                    `${current.intrinsicHeight}px`,
-                    `${final.intrinsicHeight}px`,
-                  ],
-                }
-              : {};
-          const widthKeyframes =
-            Math.round(current.intrinsicWidth) !==
-            Math.round(final.intrinsicWidth)
-              ? {
-                  minWidth: [
-                    `${current.intrinsicWidth}px`,
-                    `${final.intrinsicWidth}px`,
-                  ],
-                  maxWidth: [
-                    `${current.intrinsicWidth}px`,
-                    `${final.intrinsicWidth}px`,
-                  ],
-                }
-              : {};
+          state.current.translate = translate;
+        }
+      },
+      // Drop animation
+      function () {
+        if (dragOperation.status.dropped) {
+          // Dispose of the effect
+          this.dispose();
 
-          animateTransform({
-            element: feedbackElement,
-            keyframes: {
-              ...heightKeyframes,
-              ...widthKeyframes,
-              translate: [
-                `${translate.x}px ${translate.y}px 0`,
-                `${finalTranslate.x}px ${finalTranslate.y}px 0`,
-              ],
-            },
-            options: {
-              duration: moved || feedbackElement !== element ? 250 : 0,
-              easing: 'ease',
-            },
-            onReady() {
-              styles.remove(['translate'], CSS_PREFIX);
-            },
-            onFinish() {
-              onComplete?.();
-              requestAnimationFrame(restoreFocus);
-            },
-          });
-        });
+          source.status = 'dropping';
+
+          let translate = state.current.translate;
+          const moved = translate != null;
+
+          if (!translate && element !== feedbackElement) {
+            translate = {
+              x: 0,
+              y: 0,
+            };
+          }
+
+          if (!translate) {
+            cleanup();
+            return;
+          }
+
+          const dropAnimation = () => {
+            {
+              /* Force the source element to be promoted to the top layer before animating it */
+              showPopover(feedbackElement);
+
+              // Pause any translate transitions that are running on the feedback element
+              const [, animation] =
+                getFinalKeyframe(
+                  feedbackElement,
+                  (keyframe) => 'translate' in keyframe
+                ) ?? [];
+
+              animation?.pause();
+
+              const target = placeholder ?? element;
+              const options = {
+                frameTransform: isSameFrame(feedbackElement, target)
+                  ? null
+                  : undefined,
+              };
+              const current = new DOMRectangle(feedbackElement, options);
+              // With a keyboard activator, since there is a transition on the translate property,
+              // the translate value may not be the same as the computed value if the transition is still running.
+              const currentTranslate =
+                parseTranslate(getComputedStyles(feedbackElement).translate) ??
+                translate;
+              const final = new DOMRectangle(target, options);
+              const delta = Rectangle.delta(current, final, source.alignment);
+              const finalTranslate = {
+                x: currentTranslate.x - delta.x,
+                y: currentTranslate.y - delta.y,
+              };
+              const heightKeyframes =
+                Math.round(current.intrinsicHeight) !==
+                Math.round(final.intrinsicHeight)
+                  ? {
+                      minHeight: [
+                        `${current.intrinsicHeight}px`,
+                        `${final.intrinsicHeight}px`,
+                      ],
+                      maxHeight: [
+                        `${current.intrinsicHeight}px`,
+                        `${final.intrinsicHeight}px`,
+                      ],
+                    }
+                  : {};
+              const widthKeyframes =
+                Math.round(current.intrinsicWidth) !==
+                Math.round(final.intrinsicWidth)
+                  ? {
+                      minWidth: [
+                        `${current.intrinsicWidth}px`,
+                        `${final.intrinsicWidth}px`,
+                      ],
+                      maxWidth: [
+                        `${current.intrinsicWidth}px`,
+                        `${final.intrinsicWidth}px`,
+                      ],
+                    }
+                  : {};
+
+              styles.set({transition}, CSS_PREFIX);
+              feedbackElement.setAttribute(DROPPING_ATTRIBUTE, '');
+              elementMutationObserver?.takeRecords();
+
+              animateTransform({
+                element: feedbackElement,
+                keyframes: {
+                  ...heightKeyframes,
+                  ...widthKeyframes,
+                  translate: [
+                    `${currentTranslate.x}px ${currentTranslate.y}px 0`,
+                    `${finalTranslate.x}px ${finalTranslate.y}px 0`,
+                  ],
+                },
+                options: {
+                  duration: moved || feedbackElement !== element ? 250 : 0,
+                  easing: 'ease',
+                },
+              }).then(() => {
+                feedbackElement.removeAttribute(DROPPING_ATTRIBUTE);
+                animation?.finish();
+                cleanup();
+                requestAnimationFrame(restoreFocus);
+              });
+            }
+          };
+
+          manager.renderer.rendering.then(dropAnimation);
+        }
       }
-    });
+    );
 
-    return () => cleanup?.();
+    return () => {
+      cleanup();
+      cleanupEffects();
+    };
   }
 
   #injectStyles() {
     const {status, source, target} = this.manager.dragOperation;
 
-    if (status.initialized) {
+    if (status.initializing) {
       const sourceDocument = getDocument(source?.element ?? null);
       const targetDocument = getDocument(target?.element ?? null);
       const documents = new Set([sourceDocument, targetDocument]);
 
       for (const doc of documents) {
-        if (!injectedStyleTags.has(doc)) {
+        let registration = styleSheetRegistry.get(doc);
+
+        if (!registration) {
           const style = document.createElement('style');
-          style.innerText = CSS_RULES;
+          style.textContent = CSS_RULES;
           doc.head.prepend(style);
-          injectedStyleTags.set(doc, style);
+          const mutationObserver = new MutationObserver((entries) => {
+            for (const entry of entries) {
+              if (entry.type === 'childList') {
+                const removedNodes = Array.from(entry.removedNodes);
+
+                if (removedNodes.length > 0 && removedNodes.includes(style)) {
+                  // Re-inject the style tag if it gets removed from the DOM
+                  doc.head.prepend(style);
+                }
+              }
+            }
+          });
+          mutationObserver.observe(doc.head, {childList: true});
+
+          registration = {
+            cleanup: () => {
+              mutationObserver.disconnect();
+              style.remove();
+            },
+            instances: new Set(),
+          };
+          styleSheetRegistry.set(doc, registration);
         }
+
+        // Track this instance for this document
+        registration.instances.add(this);
       }
     }
   }
@@ -598,11 +719,19 @@ export class Feedback extends Plugin<DragDropManager, FeedbackOptions> {
   public destroy(): void {
     super.destroy();
 
-    injectedStyleTags.forEach((style) => style.remove());
-    injectedStyleTags.clear();
+    // Clean up documents this instance was tracking
+    for (const [doc, registration] of styleSheetRegistry.entries()) {
+      if (registration.instances.has(this)) {
+        registration.instances.delete(this);
+
+        // If no more instances are using this document, clean it up
+        if (registration.instances.size === 0) {
+          registration.cleanup();
+          styleSheetRegistry.delete(doc);
+        }
+      }
+    }
   }
 
   static configure = configurator(Feedback);
 }
-
-const injectedStyleTags = new Map<Document, HTMLStyleElement>();

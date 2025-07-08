@@ -1,5 +1,153 @@
 # @dnd-kit/react
 
+## 0.1.19
+
+### Patch Changes
+
+- Updated dependencies [[`cc7feac`](https://github.com/clauderic/dnd-kit/commit/cc7feacb003b95a744c81e7c75c2aa26d071971f), [`d848327`](https://github.com/clauderic/dnd-kit/commit/d848327b242c6714b36207071ad30e6b4183e865)]:
+  - @dnd-kit/dom@0.1.19
+  - @dnd-kit/state@0.1.19
+  - @dnd-kit/abstract@0.1.19
+
+## 0.1.18
+
+### Patch Changes
+
+- [#1715](https://github.com/clauderic/dnd-kit/pull/1715) [`e502979`](https://github.com/clauderic/dnd-kit/commit/e502979375b9211fef277b8d657d9411f84be96c) Thanks [@github-actions](https://github.com/apps/github-actions)! - Improved TypeScript generics for better type safety and flexibility
+
+  - Enhanced `DragDropManager` to accept generic type parameters with proper constraints, allowing for more flexible type usage while maintaining type safety
+  - Updated `DragDropProvider` to support custom generic types for draggable and droppable entities
+  - Modified React hooks (`useDragDropManager`, `useDragDropMonitor`, `useDragOperation`) to properly infer and return the correct generic types
+  - Changed from concrete `Draggable` and `Droppable` types to generic parameters constrained by `Data` type
+
+- [#1715](https://github.com/clauderic/dnd-kit/pull/1715) [`d6b5736`](https://github.com/clauderic/dnd-kit/commit/d6b57365dce694ecbc86f9c507dab42d0c698a99) Thanks [@github-actions](https://github.com/apps/github-actions)! - **<DragOverlay>**: Added `disabled` prop to temporarily disable `<DragOverlay>` without unmounting it. The `disabled` prop accepts either a `boolean` or function that receives the `source` as input and returns a `boolean`, which can be useful to disable the `<DragOverlay>` based on the `type` or `data` of the `source`.
+
+- [#1714](https://github.com/clauderic/dnd-kit/pull/1714) [`6a27d87`](https://github.com/clauderic/dnd-kit/commit/6a27d87402916b736f8bc1f58d9cb434d079ccef) Thanks [@clauderic](https://github.com/clauderic)! - Refactor renderer to better handle calls to `useOptimistic` to update state during transitions.
+
+- Updated dependencies [[`e502979`](https://github.com/clauderic/dnd-kit/commit/e502979375b9211fef277b8d657d9411f84be96c), [`88942be`](https://github.com/clauderic/dnd-kit/commit/88942be007a743673644ba531fd5c6b1a501bf2e), [`9326d43`](https://github.com/clauderic/dnd-kit/commit/9326d43ba0b9b682ee377011b96d4713711571a5), [`7af261f`](https://github.com/clauderic/dnd-kit/commit/7af261f4e3214a9ebef46d26df607221306eb697), [`b9b182e`](https://github.com/clauderic/dnd-kit/commit/b9b182ef39f7aa8bfe2d331cb20c696b1e9fc15a), [`bb790c9`](https://github.com/clauderic/dnd-kit/commit/bb790c928a9955bd5c7c4312875090e16d891c23)]:
+  - @dnd-kit/dom@0.1.18
+  - @dnd-kit/abstract@0.1.18
+  - @dnd-kit/state@0.1.18
+
+## 0.1.17
+
+### Patch Changes
+
+- Updated dependencies [[`cfb94d4`](https://github.com/clauderic/dnd-kit/commit/cfb94d4fef372059cb87cf0e63bc3ab87f5c8bd8)]:
+  - @dnd-kit/dom@0.1.17
+  - @dnd-kit/abstract@0.1.17
+  - @dnd-kit/state@0.1.17
+
+## 0.1.16
+
+### Patch Changes
+
+- Updated dependencies [[`93911cc`](https://github.com/clauderic/dnd-kit/commit/93911cca237bea302a12749476d4e18b74ac0fa2), [`0f68bb6`](https://github.com/clauderic/dnd-kit/commit/0f68bb6c95b1287d5988b1d5d4e94f1462fc36a5)]:
+  - @dnd-kit/dom@0.1.16
+  - @dnd-kit/abstract@0.1.16
+  - @dnd-kit/state@0.1.16
+
+## 0.1.15
+
+### Patch Changes
+
+- Updated dependencies [[`5539a5a`](https://github.com/clauderic/dnd-kit/commit/5539a5a2991ac86b217dba3ef70fc06331bd0260)]:
+  - @dnd-kit/dom@0.1.15
+  - @dnd-kit/abstract@0.1.15
+  - @dnd-kit/state@0.1.15
+
+## 0.1.14
+
+### Patch Changes
+
+- Updated dependencies [[`4c1e05d`](https://github.com/clauderic/dnd-kit/commit/4c1e05d531a1ffbf32b27d997ebd504532b9616a), [`a97b10c`](https://github.com/clauderic/dnd-kit/commit/a97b10c9d8467c14ef678d3776ea10a2a1e6e027), [`caa3273`](https://github.com/clauderic/dnd-kit/commit/caa3273af1fcee9b4e3b5f1e80e5573c84ab69e3), [`cb47da3`](https://github.com/clauderic/dnd-kit/commit/cb47da3dad7ec617fabb6e8c3b3432a19b354812), [`f295344`](https://github.com/clauderic/dnd-kit/commit/f2953444cbdb195e169fc615454d6be3170bf2a6)]:
+  - @dnd-kit/dom@0.1.14
+  - @dnd-kit/abstract@0.1.14
+  - @dnd-kit/state@0.1.14
+
+## 0.1.13
+
+### Patch Changes
+
+- Updated dependencies [[`c46415a`](https://github.com/clauderic/dnd-kit/commit/c46415a0733f5cbba49cdbd7b6786a0d9add6800), [`382f4e2`](https://github.com/clauderic/dnd-kit/commit/382f4e2f0800a3b85487a1a7a2cefef4484bee70), [`432a0dd`](https://github.com/clauderic/dnd-kit/commit/432a0dd8c67cfdebf0194205979b7249620e73a8), [`a3496c1`](https://github.com/clauderic/dnd-kit/commit/a3496c15c2dc07cc982608b2a4afb1c61b01dbb8), [`4a22b39`](https://github.com/clauderic/dnd-kit/commit/4a22b39267f1fa8d17a62b9c29ff8728733c1478)]:
+  - @dnd-kit/dom@0.1.13
+  - @dnd-kit/abstract@0.1.13
+  - @dnd-kit/state@0.1.13
+
+## 0.1.12
+
+### Patch Changes
+
+- Updated dependencies [[`2e0e2e2`](https://github.com/clauderic/dnd-kit/commit/2e0e2e256d2043831df6a245df9f618ac4b5ecc9), [`b86867b`](https://github.com/clauderic/dnd-kit/commit/b86867b1426525729357654a62f52fe0554f7f73), [`a913f5e`](https://github.com/clauderic/dnd-kit/commit/a913f5e68435c5c0a4a073a7437f265bcc0b5d1d)]:
+  - @dnd-kit/dom@0.1.12
+  - @dnd-kit/abstract@0.1.12
+  - @dnd-kit/state@0.1.12
+
+## 0.1.11
+
+### Patch Changes
+
+- Updated dependencies [[`2370665`](https://github.com/clauderic/dnd-kit/commit/237066598f7da6cd59d78120260788593371e820)]:
+  - @dnd-kit/dom@0.1.11
+  - @dnd-kit/abstract@0.1.11
+  - @dnd-kit/state@0.1.11
+
+## 0.1.10
+
+### Patch Changes
+
+- Updated dependencies [[`a0f5c44`](https://github.com/clauderic/dnd-kit/commit/a0f5c44985b634e8044415db342354493d201f3e)]:
+  - @dnd-kit/dom@0.1.10
+  - @dnd-kit/abstract@0.1.10
+  - @dnd-kit/state@0.1.10
+
+## 0.1.9
+
+### Patch Changes
+
+- Updated dependencies [[`ffdbf52`](https://github.com/clauderic/dnd-kit/commit/ffdbf52a93cbe0c1c785feca57622d4712175a3a)]:
+  - @dnd-kit/dom@0.1.9
+  - @dnd-kit/abstract@0.1.9
+  - @dnd-kit/state@0.1.9
+
+## 0.1.8
+
+### Patch Changes
+
+- Updated dependencies [[`14dc059`](https://github.com/clauderic/dnd-kit/commit/14dc05950ad31c50240ee864431112d7f1b70da0), [`fcd9bb5`](https://github.com/clauderic/dnd-kit/commit/fcd9bb56fafc5ec23ded219bfcd7fdfa31a0caff), [`93d3c7c`](https://github.com/clauderic/dnd-kit/commit/93d3c7c8b01d640b017cf8d2cddc69cc47c74ca5), [`3c625d6`](https://github.com/clauderic/dnd-kit/commit/3c625d61fc8bdba026d445333c2d1ca1d8489294)]:
+  - @dnd-kit/dom@0.1.8
+  - @dnd-kit/abstract@0.1.8
+  - @dnd-kit/state@0.1.8
+
+## 0.1.7
+
+### Patch Changes
+
+- Updated dependencies [[`0618852`](https://github.com/clauderic/dnd-kit/commit/0618852fdeb6948e85d1330febee73e48458e740)]:
+  - @dnd-kit/dom@0.1.7
+  - @dnd-kit/abstract@0.1.7
+  - @dnd-kit/state@0.1.7
+
+## 0.1.6
+
+### Patch Changes
+
+- [#1670](https://github.com/clauderic/dnd-kit/pull/1670) [`a69c390`](https://github.com/clauderic/dnd-kit/commit/a69c390d5b00c186e97913e0fbe32760e63f98b0) Thanks [@GuillaumeSalles](https://github.com/GuillaumeSalles)! - Fix useDroppable effects when inputs are updated
+
+- Updated dependencies [[`7ceb799`](https://github.com/clauderic/dnd-kit/commit/7ceb799c7d214bc8223ec845357a0040c28ae40e), [`299389b`](https://github.com/clauderic/dnd-kit/commit/299389befcc747fe8d79231ba32f73afae88615e), [`4f49d1b`](https://github.com/clauderic/dnd-kit/commit/4f49d1b1de317adaa05cc0b7adacbaffda4fd8c2), [`b18115f`](https://github.com/clauderic/dnd-kit/commit/b18115f4b19c45c76c827921b25e47aad16c91ce), [`ac13c92`](https://github.com/clauderic/dnd-kit/commit/ac13c9298cc8b4eb680039cf17fb10582ab8d023)]:
+  - @dnd-kit/abstract@0.1.6
+  - @dnd-kit/state@0.1.6
+  - @dnd-kit/dom@0.1.6
+
+## 0.1.5
+
+### Patch Changes
+
+- Updated dependencies [[`8fecc41`](https://github.com/clauderic/dnd-kit/commit/8fecc416fb8503fcb555563a44246cd177677b4e), [`a9c17df`](https://github.com/clauderic/dnd-kit/commit/a9c17df386697dc3236f3ba1b7e319cdf4c5a706), [`f31589a`](https://github.com/clauderic/dnd-kit/commit/f31589ae579f1ce574207d44e4016e30b82549e9), [`616db17`](https://github.com/clauderic/dnd-kit/commit/616db17cdded5974febf69718337db0604c613fc)]:
+  - @dnd-kit/dom@0.1.5
+  - @dnd-kit/abstract@0.1.5
+  - @dnd-kit/state@0.1.5
+
 ## 0.1.4
 
 ### Patch Changes

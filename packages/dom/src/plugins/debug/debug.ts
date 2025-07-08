@@ -1,8 +1,8 @@
-import {effect} from '@dnd-kit/state';
+import {effects} from '@dnd-kit/state';
 import {Plugin} from '@dnd-kit/abstract';
 import type {UniqueIdentifier} from '@dnd-kit/abstract';
 import type {DragDropManager} from '@dnd-kit/dom';
-import {getWindow} from '@dnd-kit/dom/utilities';
+import {showPopover, hidePopover} from '@dnd-kit/dom/utilities';
 
 export class Debug extends Plugin<DragDropManager> {
   constructor(manager: DragDropManager) {
@@ -12,7 +12,7 @@ export class Debug extends Plugin<DragDropManager> {
     let draggableElement: HTMLElement | null = null;
     let positionElement: HTMLElement | null = null;
 
-    const cleanup = effect(() => {
+    const cleanup = effects(() => {
       const {dragOperation} = manager;
       const {x, y} = dragOperation.position.current;
       const {current: _, idle} = dragOperation.status;
@@ -23,16 +23,15 @@ export class Debug extends Plugin<DragDropManager> {
 
       if (draggable && dragOperation.shape) {
         const element = draggableElement ?? createDebugElement();
-        const window = getWindow(element);
         const {boundingRectangle} = dragOperation.shape.current;
 
         if (!draggableElement) {
           draggableElement = element;
 
           const style = document.createElement('style');
-          style.innerText = `dialog[data-dnd-kit-debug]::backdrop {display: none;}`;
+          style.textContent = `dialog[data-dnd-kit-debug]::backdrop {display: none;}`;
 
-          element.innerText = `${draggable.id}`;
+          element.textContent = `${draggable.id}`;
           element.setAttribute('data-dnd-kit-debug', '');
           element.appendChild(style);
           element.style.backgroundColor = 'rgba(118, 190, 250, 0.5)';
@@ -41,14 +40,13 @@ export class Debug extends Plugin<DragDropManager> {
           document.body.appendChild(element);
         }
 
-        if (element instanceof window.HTMLDialogElement) {
-          element.showPopover();
-        }
-
         element.style.top = `${boundingRectangle.top}px`;
         element.style.left = `${boundingRectangle.left}px`;
         element.style.width = `${boundingRectangle.width}px`;
         element.style.height = `${boundingRectangle.height}px`;
+
+        hidePopover(element);
+        showPopover(element);
       } else {
         draggableElement?.remove();
         draggableElement = null;
@@ -83,7 +81,7 @@ export class Debug extends Plugin<DragDropManager> {
           debugElement.style.left = `${boundingRectangle.left}px`;
           debugElement.style.width = `${boundingRectangle.width}px`;
           debugElement.style.height = `${boundingRectangle.height}px`;
-          debugElement.innerText = `${droppable.id}`;
+          debugElement.textContent = `${droppable.id}`;
         } else if (element) {
           element.remove();
           elements.delete(droppable.id);
@@ -110,11 +108,14 @@ export class Debug extends Plugin<DragDropManager> {
           positionElement.appendChild(horizontal);
           positionElement.appendChild(vertical);
           document.body.appendChild(positionElement);
-          positionElement.showPopover();
         }
 
         positionElement.style.top = `${y}px`;
         positionElement.style.left = `${x}px`;
+
+        hidePopover(positionElement);
+        // Only one element can be promoted to the top layer per call stack
+        queueMicrotask(() => positionElement && showPopover(positionElement));
       } else {
         positionElement?.remove();
         positionElement = null;
@@ -133,7 +134,7 @@ export class Debug extends Plugin<DragDropManager> {
 function createDebugElement(tagName = 'div') {
   const element = document.createElement(tagName);
 
-  element.setAttribute('popover', '');
+  element.setAttribute('popover', 'manual');
   element.style.all = 'initial';
   element.style.position = 'fixed';
   element.style.display = 'flex';
@@ -142,7 +143,7 @@ function createDebugElement(tagName = 'div') {
   element.style.border = '1px solid rgba(0, 0, 0, 0.1)';
   element.style.boxSizing = 'border-box';
   element.style.pointerEvents = 'none';
-  element.style.zIndex = '9999';
+  element.style.zIndex = 'calc(infinity)';
   element.style.color = 'rgba(0,0,0,0.5)';
   element.style.fontFamily = 'sans-serif';
   element.style.textShadow = '0 0 3px rgba(255,255,255,0.8)';
